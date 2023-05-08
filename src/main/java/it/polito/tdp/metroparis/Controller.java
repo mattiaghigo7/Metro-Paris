@@ -32,7 +32,17 @@ public class Controller {
 
     @FXML
     void handleCalcola(ActionEvent event) {
-
+    	Fermata partenza = this.boxPartenza.getValue();
+    	Fermata arrivo = this.boxArrivo.getValue();
+    	if(partenza!=null && arrivo!=null && !partenza.equals(arrivo)) {
+        	List<Fermata> percorso = this.model.percorso(partenza, arrivo);
+        	this.txtResult.setText("Percorso tra "+partenza.getNome()+" e "+arrivo.getNome()+"\n\n");
+        	for(Fermata f : percorso) {
+        		this.txtResult.appendText(f.getNome()+"\n");
+        	}
+    	} else {
+    		this.txtResult.appendText("Devi selezionare 2 stazioni diverse tra loro\n");
+    	}
     }
 
     @FXML

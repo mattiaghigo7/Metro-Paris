@@ -5,6 +5,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.traverse.BreadthFirstIterator;
 
 import it.polito.tdp.metroparis.db.MetroDAO;
 
@@ -63,6 +64,32 @@ public class Model {
 //		System.out.println("Elapsed time "+(tac-tic));
 		
 		System.out.println("Grafo creato con "+grafo.vertexSet().size()+" vertici e "+grafo.edgeSet().size()+" archi");
+	}
+	
+	//determina il percorso minimo tra le 2 fermate
+	public List<Fermata> percorso(Fermata partenza, Fermata arrivo) {
+		//visita il grafo partendo da "partenza"
+		BreadthFirstIterator<Fermata,DefaultEdge> visita = new BreadthFirstIterator<>(grafo,partenza);
+		List<Fermata> raggiungibili = new ArrayList<>();
+		while(visita.hasNext()) {
+			Fermata f = visita.next();
+//			raggiungibili.add(f);
+		}
+//		System.out.println(raggiungibili);
+		
+		//Trova il percorso sull'albero di visita
+		List<Fermata> percorso = new ArrayList<>();
+		Fermata corrente = arrivo;
+		percorso.add(arrivo);
+		DefaultEdge e = visita.getSpanningTreeEdge(corrente);
+		while(e!=null) {
+			Fermata precedente = Graphs.getOppositeVertex(grafo, e, corrente);
+			percorso.add(0,precedente);
+			corrente = precedente;
+			e = visita.getSpanningTreeEdge(corrente);
+		}
+		
+		return percorso;
 	}
 	
 	public List<Fermata> getAllFermate(){
