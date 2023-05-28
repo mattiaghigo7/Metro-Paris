@@ -2,22 +2,29 @@ package it.polito.tdp.metroparis.model;
 
 import java.util.*;
 import org.jgrapht.Graph;
+import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
+
+import com.javadocmd.simplelatlng.LatLngTool;
+import com.javadocmd.simplelatlng.util.LengthUnit;
 
 import it.polito.tdp.metroparis.db.MetroDAO;
 
 public class Model {
 
-	private Graph<Fermata, DefaultEdge> grafo;
+	private Graph<Fermata, DefaultWeightedEdge> grafo;
 	private List<Fermata> fermate;
 	private Map<Integer,Fermata> fermateIdMap;
 	
 	public void creaGrafo() {
 		//crea l'oggetto grafo
-		grafo = new SimpleGraph<>(DefaultEdge.class);
+		grafo = new SimpleWeightedGraph<>(DefaultWeightedEdge.class);
 		
 		//aggiungi i vertici
 		MetroDAO dao = new MetroDAO();
@@ -58,7 +65,8 @@ public class Model {
 //		tic = System.currentTimeMillis();
 		List<coppieF> allCoppie = dao.getAllCoppie(fermateIdMap);
 		for(coppieF c : allCoppie) {
-			grafo.addEdge(c.partenza, c.arrivo);
+			double distanza = LatLngTool.distance(c.partenza.getCoords(), c.getArrivo().getCoords(), LengthUnit.METER);
+			Graphs.addEdge(this.grafo, c.partenza, c.arrivo, distanza);
 		}
 //		tac = System.currentTimeMillis();
 //		System.out.println("Elapsed time "+(tac-tic));
@@ -68,28 +76,30 @@ public class Model {
 	
 	//determina il percorso minimo tra le 2 fermate
 	public List<Fermata> percorso(Fermata partenza, Fermata arrivo) {
-		//visita il grafo partendo da "partenza"
-		BreadthFirstIterator<Fermata,DefaultEdge> visita = new BreadthFirstIterator<>(grafo,partenza);
-		List<Fermata> raggiungibili = new ArrayList<>();
-		while(visita.hasNext()) {
-			Fermata f = visita.next();
-//			raggiungibili.add(f);
-		}
-//		System.out.println(raggiungibili);
+//		//visita il grafo partendo da "partenza"
+//		BreadthFirstIterator<Fermata,DefaultWeightedEdge> visita = new BreadthFirstIterator<>(grafo,partenza);
+//		List<Fermata> raggiungibili = new ArrayList<>();
+//		while(visita.hasNext()) {
+//			Fermata f = visita.next();
+////			raggiungibili.add(f);
+//		}
+////		System.out.println(raggiungibili);
+//		
+//		//Trova il percorso sull'albero di visita
+//		List<Fermata> percorso = new ArrayList<>();
+//		Fermata corrente = arrivo;
+//		percorso.add(arrivo);
+//		DefaultWeightedEdge e = visita.getSpanningTreeEdge(corrente);
+//		while(e!=null) {
+//			Fermata precedente = Graphs.getOppositeVertex(grafo, e, corrente);
+//			percorso.add(0,precedente);
+//			corrente = precedente;
+//			e = visita.getSpanningTreeEdge(corrente);
+//		}
+		DijkstraShortestPath<Fermata, DefaultWeightedEdge> sp = new DijkstraShortestPath<>(grafo);
+		GraphPath<Fermata,DefaultWeightedEdge> gp = sp.getPath(partenza, arrivo);
 		
-		//Trova il percorso sull'albero di visita
-		List<Fermata> percorso = new ArrayList<>();
-		Fermata corrente = arrivo;
-		percorso.add(arrivo);
-		DefaultEdge e = visita.getSpanningTreeEdge(corrente);
-		while(e!=null) {
-			Fermata precedente = Graphs.getOppositeVertex(grafo, e, corrente);
-			percorso.add(0,precedente);
-			corrente = precedente;
-			e = visita.getSpanningTreeEdge(corrente);
-		}
-		
-		return percorso;
+		return gp.getVertexList();
 	}
 	
 	public List<Fermata> getAllFermate(){
